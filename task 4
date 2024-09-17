@@ -1,0 +1,134 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <iomanip> // For std::setprecision
+
+using namespace std;
+
+// Transaction class to record individual transactions
+class Transaction {
+public:
+    string type;
+    double amount;
+    string date;
+
+    Transaction(const string& type, double amount, const string& date)
+        : type(type), amount(amount), date(date) {}
+};
+
+// Account class to handle account operations
+class Account {
+private:
+    string accountNumber;
+    double balance;
+    vector<Transaction> transactions;
+
+public:
+    Account(const string& accountNumber, double initialBalance)
+        : accountNumber(accountNumber), balance(initialBalance) {}
+
+    void deposit(double amount) {
+        balance += amount;
+        transactions.emplace_back("Deposit", amount, "2024-09-17"); // Simple date for example
+    }
+
+    bool withdraw(double amount) {
+        if (amount > balance) {
+            cout << "Insufficient funds." << endl;
+            return false;
+        }
+        balance -= amount;
+        transactions.emplace_back("Withdraw", amount, "2024-09-17"); // Simple date for example
+        return true;
+    }
+
+    bool transfer(Account& toAccount, double amount) {
+        if (withdraw(amount)) {
+            toAccount.deposit(amount);
+            transactions.emplace_back("Transfer Out", amount, "2024-09-17");
+            toAccount.transactions.emplace_back("Transfer In", amount, "2024-09-17");
+            return true;
+        }
+        return false;
+    }
+
+    void printAccountInfo() const {
+        cout << "Account Number: " << accountNumber << endl;
+        cout << "Balance: $" << fixed << setprecision(2) << balance << endl;
+    }
+
+    void printTransactions() const {
+        cout << "Transactions:" << endl;
+        for (const auto& txn : transactions) {
+            cout << txn.date << " - " << txn.type << ": $" << fixed << setprecision(2) << txn.amount << endl;
+        }
+    }
+};
+
+// Customer class to manage customer details and accounts
+class Customer {
+private:
+    string name;
+    vector<Account> accounts;
+
+public:
+    Customer(const string& name) : name(name) {}
+
+    void addAccount(const string& accountNumber, double initialBalance) {
+        accounts.emplace_back(accountNumber, initialBalance);
+    }
+
+    Account* getAccount(const string& accountNumber) {
+        for (auto& account : accounts) {
+            if (accountNumber == accountNumber) {
+                return &account;
+            }
+        }
+        cout << "Account not found." << endl;
+        return nullptr;
+    }
+
+    void printCustomerInfo() const {
+        cout << "Customer Name: " << name << endl;
+        cout << "Number of Accounts: " << accounts.size() << endl;
+        for (const auto& account : accounts) {
+            account.printAccountInfo();
+        }
+    }
+};
+
+// Main function to demonstrate the banking system
+int main() {
+    // Create customers
+    Customer customer1("Alice");
+    Customer customer2("Bob");
+
+    // Add accounts to customers
+    customer1.addAccount("12345", 500.00);
+    customer2.addAccount("67890", 300.00);
+
+    // Perform transactions
+    Account* account1 = customer1.getAccount("12345");
+    Account* account2 = customer2.getAccount("67890");
+
+    if (account1 && account2) {
+        account1->deposit(200.00);
+        account1->withdraw(50.00);
+        account1->transfer(*account2, 100.00);
+    }
+
+    // Print customer and account information
+    customer1.printCustomerInfo();
+    customer2.printCustomerInfo();
+
+    // Print transaction details
+    cout << "\nAccount Transactions:" << endl;
+    if (account1) {
+        account1->printTransactions();
+    }
+    if (account2) {
+        account2->printTransactions();
+    }
+
+    return 0;
+}
